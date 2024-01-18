@@ -4,16 +4,16 @@ import numpy as np
 from tensorflow import keras
 from tensorflow.keras.models import load_model
 from tensorflow.keras.applications.xception import preprocess_input
+from moviepy.video.io.VideoFileClip import VideoFileClip
 import cloudinary
 import cloudinary.uploader
 import os
-from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 
-# Set the path for the uploaded videos
-UPLOAD_FOLDER = 'static/uploads'
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+# Set the path for the static files (images, CSS, JS, etc.)
+STATIC_FOLDER = 'static'
+app.config['STATIC_FOLDER'] = STATIC_FOLDER
 
 # Load the pre-trained model
 model = load_model('xception_deepfake_image.h5')
@@ -107,18 +107,24 @@ def predict():
         
     elif file and allowed_video_file(file.filename):
         try:
-            test_video = file_path
-            print(f"Test video path: {test_video}")
-            print(2)
-            label = "FAKE" if sequence_prediction(test_video)>=0.5 else "REAL" 
-            print(1)
+            output_thumbnail_path = os.path.join(os.getcwd(), "static/thumbnail.jpg")
+            create_thumbnail(file_path, output_thumbnail_path)
 
-            # Get the local video URL
-            video_url = url_for('static', filename=f'{secure_filename(file.filename)}')
+            result = cloudinary.uploader.upload(
+                output_thumbnail_path,
+                folder="deepguard",
+                resource_type="image")
+            
+            photo_url = result['url']
+            
+            print(f"Test video path: {file_path}")
+            print(2)
+            label = "FAKE" if sequence_prediction(file_path)>=0.5 else "REAL" 
+            print(1)
 
             # Send the JSON response
             response_data = {'status': label}
-            return render_template('index.html', res=response_data, v_url=video_url)
+            return render_template('index.html', res=response_data, p_url=photo_url)
         except Exception as e:
             response_data = {'status': f'Error processing image: {str(e)}'}
             return render_template('index.html', res=response_data)
@@ -126,13 +132,17 @@ def predict():
     else:
         return jsonify({'status': 'Invalid file or file type not allowed'})
     
-# def video_code(file_path):
-#     # result = cloudinary.uploader.upload(
-#     #     file_path,
-#     #     folder="deepguard",
-#     #     resource_type="video")
-    
-#     # video_url = result['url']
+
+def create_thumbnail(video_path, output_path, time_in_seconds=5):
+    # Load the video clip
+    video_clip = VideoFileClip(video_path)
+
+    # Get the frame at the specified time (in seconds)
+    thumbnail_frame = video_clip.get_frame(time_in_seconds)
+
+    # Save the frame as an image (thumbnail)
+    cv2.imwrite(output_path, cv2.cvtColor(thumbnail_frame, cv2.COLOR_RGB2BGR))
+
         
 IMG_SIZE = 224
 MAX_SEQ_LENGTH = 20

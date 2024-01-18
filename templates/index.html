@@ -152,6 +152,13 @@
             width: 25%;
             height: 70%;
         }
+
+        .uploaded-video {
+            border-radius: 15px;
+            width: 15vw;
+            position: absolute;
+            top: 10%;
+        }
     </style>
     
 </head>
@@ -170,8 +177,8 @@
         {% endif %}
 
         {% if v_url %}
-            <video width="320" height="240" controls>
-                <source src="{{ v_url }}" type="video/mp4">
+            <video class="uploaded-video" width="320" height="240" controls>
+                <source src="{{ url_for('static', filename='sample.mp4') }}" type="video/mp4">
                 Your browser does not support the video tag.
             </video>
         {% endif %}
@@ -196,11 +203,11 @@
         </form>
         {% if res %}
             <div class="chat">
-                <button class="options" id="submitbtn">+ Add Image</button>
+                <button class="options" id="submitbtn">+ Add File</button>
             </div>
         {% else %}
             <div class="drag-drop">
-                <p class="text">Drag and Drop image to check</p>
+                <p class="text">Drag and Drop file to check</p>
                 <div class="drop" ondragover="allowDrop(event)" ondrop="handleDrop(event)">
                     <span class="icon">
                         <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="340.531" height="419.116" viewBox="0 0 340.531 419.116">
